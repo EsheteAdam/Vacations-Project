@@ -1,0 +1,29 @@
+.MainLayout {
+    height: 100vh;
+    box-sizing: border-box;
+    display: grid;
+    grid-template-rows: 8% 88% 4%;
+    background-color: whitesmoke;
+}
+h1,
+h2,
+h3 {
+    color: #333;
+    font-size: 2.5em;
+    font-family: 'Courier New', Courier, serif;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+    letter-spacing: 1.5px;
+}
+p {
+    color: #333;
+    font-size: 1.3em;
+    line-height: 1.6;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+}
+.content-container {
+    padding: 30px;
+    /* border-radius: 20px;
+    margin-top: 5vh; */
+    max-width: 500px;
+    font-family: "Montserrat", sans-serif;
+}

@@ -1,0 +1,29 @@
+.VacationsPage {
+    height: 100vh;
+    overflow: auto;
+}
+
+.Card {
+    margin: 1.5rem;
+}
+
+.vacationCards {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    overflow: auto;
+    max-height: 80vh;
+    position: relative;
+}
+
+.Pagination {
+    position: fixed;
+    bottom: 0;
+    margin-bottom: 0.2em;
+    left: 50%;
+    transform: translateX(-50%);
+    background-image: url("../../../assets/footerBg.jpg");
+    background-size: cover;
+    background-position: center;
+    border-radius: 25px;
+}

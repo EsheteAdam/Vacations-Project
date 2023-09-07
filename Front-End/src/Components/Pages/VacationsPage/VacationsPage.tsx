@@ -1,0 +1,221 @@
+import Card from "./VacationCard/VacationCard";
+import "./VacationsPage.css";
+import { useEffect, useState } from "react";
+import { RootState, vacation } from "../../../Redux/VacationStore";
+import axios from "axios";
+import { allVacationsAction } from "../../../Redux/VacationReducer";
+import Pagination from "@mui/material/Pagination";
+import moment from "moment";
+import { sortBy } from "lodash";
+import { Checkbox, FormControlLabel } from "@mui/material";
+import { Favorite, FavoriteBorder } from "@mui/icons-material";
+import AccessTimeIcon from "@mui/icons-material/AccessTime";
+import AccessTimeFilledIcon from "@mui/icons-material/AccessTimeFilled";
+import PlayCircleOutlineIcon from "@mui/icons-material/PlayCircleOutline";
+import PlayCircleFilledIcon from "@mui/icons-material/PlayCircleFilled";
+import { useSelector } from "react-redux";
+import { VacationWithKey } from "../../../Models/VacationWithKey";
+import { allFollowersAction } from "../../../Redux/FollowReducer";
+import AddVacation from "./AddVacation/AddVacation";
+
+function Vacations(): JSX.Element {
+    // for Pagination
+    const [page, setPage] = useState(1);
+    const itemsPerPage = 8;
+    // handle change for Pagination
+    const handleChange = (event: any, value: any) => {
+        setPage(value);
+    };
+
+    // get data from database and save in redux
+    const fetchVacations = () => {
+        console.log("getting vacations from backend....");
+        axios
+            .get("http://localhost:8080/api/v1/vacation/vacations/allVacations")
+            .then((response) => {
+                vacation.dispatch(allVacationsAction(response.data));
+            })
+            .catch((error) => {
+                console.error("Error fetching data: ", error);
+            });
+    };
+
+    //if vacations is empty get all vacations from database and save in redux
+    useEffect(() => {
+        if (vacation.getState().vacations.vacations.length < 1) {
+            fetchVacations();
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
+    //if followers is empty get all followers from database and save in redux
+    useEffect(() => {
+        if (vacation.getState().follower.followers.length < 1) {
+            console.log("getting followers from backend....");
+            axios
+                .get(
+                    "http://localhost:8080/api/v1/vacation/followers/allFollowers"
+                )
+                .then((response) => {
+                    vacation.dispatch(allFollowersAction(response.data));
+                })
+                .catch((error) => {
+                    console.error("Error fetching data: ", error);
+                });
+        }
+    }, []);
+
+    // fetch vacations from redux store
+    const vacations: VacationWithKey[] = useSelector(
+        (state: RootState) => state.vacations.vacations
+    );
+    // sort the vacations by date
+    let sortedVacations = sortBy(vacations, (vacation: VacationWithKey) => {
+        return moment(vacation.start_date, "DD/MM/YYYY");
+    });
+
+    // check if user or admin is logged in
+    const role = useSelector((state: RootState) => state.users.role);
+    // get followers state
+    const followers = useSelector(
+        (state: RootState) => state.follower.followers
+    );
+    //  get the logged in user state
+    const user = useSelector((state: RootState) => state.users.currentUser);
+
+    // make sure only one checkbox is checked
+    const [selected, setSelected] = useState("");
+
+    // switch for the checkboxes
+    switch (selected) {
+        case "follow":
+            // Get the ids of the vacations that the logged-in user follows
+            const followedVacationKeys = followers
+                .filter((follower) => follower.user_key === user?.user_key)
+                .map((follower) => follower.vacation_key);
+            sortedVacations = sortedVacations.filter((vacation) =>
+                followedVacationKeys.includes(vacation.vacation_key)
+            );
+            break;
+        case "notStarted":
+            sortedVacations = sortedVacations.filter((vacation) => {
+                // Parsing vacationStart from string to moment object
+                const vacationStartDate = moment(
+                    vacation.start_date,
+                    "DD/MM/YYYY"
+                );
+                // Comparing it to the current date
+                return vacationStartDate.isAfter(moment());
+            });
+            break;
+        case "active":
+            sortedVacations = sortedVacations.filter((vacation) => {
+                // Parsing vacationStart and vacationEnd from string to moment object
+                const vacationStartDate = moment(
+                    vacation.start_date,
+                    "DD/MM/YYYY"
+                );
+                const vacationEndDate = moment(vacation.end_date, "DD/MM/YYYY");
+                // Getting current date
+                const currentDate = moment();
+                // Comparing if current date is between start and end dates
+                return (
+                    currentDate.isSameOrAfter(vacationStartDate) &&
+                    currentDate.isSameOrBefore(vacationEndDate)
+                );
+            });
+            break;
+    }
+    console.log(sortedVacations);
+    return (
+        <div className="Vacations">
+            {/* Checkboxes for user filter only for user*/}
+            {role === "user" && (
+                <div style={{ marginTop: 2 }}>
+                    <FormControlLabel
+                        control={
+                            <Checkbox
+                                icon={<FavoriteBorder />}
+                                checkedIcon={<Favorite />}
+                                checked={selected === "follow"}
+                                onChange={() => {
+                                    setSelected(
+                                        selected === "follow" ? "" : "follow"
+                                    );
+                                    setPage(1);
+                                }}
+                            />
+                        }
+                        label="Vacations you follow"
+                    />
+                    <FormControlLabel
+                        control={
+                            <Checkbox
+                                icon={<AccessTimeIcon />}
+                                checkedIcon={<AccessTimeFilledIcon />}
+                                checked={selected === "notStarted"}
+                                onChange={() => {
+                                    setSelected(
+                                        selected === "notStarted"
+                                            ? ""
+                                            : "notStarted"
+                                    );
+                                    setPage(1);
+                                }}
+                            />
+                        }
+                        label="Vacations that didn't start"
+                    />
+                    <FormControlLabel
+                        control={
+                            <Checkbox
+                                icon={<PlayCircleOutlineIcon />}
+                                checkedIcon={<PlayCircleFilledIcon />}
+                                checked={selected === "active"}
+                                onChange={() => {
+                                    setSelected(
+                                        selected === "active" ? "" : "active"
+                                    );
+                                    setPage(1);
+                                }}
+                            />
+                        }
+                        label="Vacations that are active now"
+                    />
+                </div>
+            )}
+            {/* add new vacation  only for admin*/}
+            {role === "admin" && <AddVacation />}
+            {/* get all vacations from redux and display all the vacations*/}
+            <div className="vacationCards">
+                {sortedVacations
+                    .slice((page - 1) * itemsPerPage, page * itemsPerPage)
+                    .map((item: any) => (
+                        <Card
+                            key={item.vacation_key}
+                            destination={item.destination}
+                            description={item.description}
+                            start_date={item.start_date}
+                            end_date={item.end_date}
+                            price={item.price}
+                            picture_file={`http://localhost:8080/${item.picture_file}`}
+                            vacation_key={item.vacation_key}
+                        />
+                    ))}
+            </div>
+            <Pagination
+                count={Math.ceil(
+                    vacation.getState().vacations.vacations.length /
+                        itemsPerPage
+                )}
+                page={page}
+                onChange={handleChange}
+                color="primary"
+                className="Pagination"
+                shape="rounded"
+            />
+        </div>
+    );
+}
+
+export default Vacations;

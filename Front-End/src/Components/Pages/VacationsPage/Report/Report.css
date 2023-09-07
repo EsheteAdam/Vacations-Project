@@ -1,0 +1,19 @@
+.Report {
+    background-image: url("../../../../assets/AAG\ Vacations.png");
+    background-size: cover;
+    background-size: contain;
+    height: 100vh;
+}
+
+.VacationsReportContainer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    transform: translateY(-10%);
+    background-color: antiquewhite;
+}
+
+.chart {
+    background-color: transparent;
+}
